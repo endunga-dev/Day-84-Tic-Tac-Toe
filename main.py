@@ -1,4 +1,5 @@
 import time
+import random # FOR AI LATER!
 from art import logo # Get the logo from art.py
 board = ["" for i in range(9)]
 
@@ -17,7 +18,12 @@ def add_letter(location, ltr):
     # The positions and board are in same order,
     # so just get the pos of that position in list and find it on board
     pos_index = positions.index(location)
-    board[pos_index] += ltr
+    if board[pos_index] == "":
+        board[pos_index] += ltr
+        return True
+    else:
+        print("You cannot place a letter there, the spot isn't empty!")
+        return False
 
 # Decide who X and O is based on the number of turns (X is ALWAYS first, turns starts off as 1)
 def letter_checker():
@@ -39,12 +45,42 @@ def win_draw_lose(ltr, turn_cnt, rows):
     else: # If none of the above are true, the game is still going
         return False
 
+# Make the AI move 😳
+def ai_move():
+    available_pos = [] # For every index and position in positions,
+    # if the board at that index (position) is blank, add it to available positions list
+    for index, pos in enumerate(positions):
+        if board[index] == '':
+            available_pos.append(pos)
+    if available_pos: # If there is an available position, make a random choice, and add a letter there
+        choice = random.choice(available_pos)
+        add_letter(choice, ai_letter)
+        return True
+    return False
+
+valid_letters = ['X', 'O']
 # Start game and logic
 print(logo)
-print("Welcome! This program is the classic tic-tac-toe game, meant for 2 players (humans for now)\n")
+print("Welcome! This program is the classic tic-tac-toe game, meant for 2 players (AI too!)\n")
 print("NOTE: To play this game, you must specify the position you want your letter placed. Type EXACTLY as shown there.\n\n"
       "Read the following to know the positions to place your letter:\n\n"
       "top-left\ntop-center\ntop-right\ncenter-left\ncenter\ncenter-right\nbottom-left\nbottom-center\nbottom-right\n")
+
+# Do you want to play against AI :O
+vs_AI = input("Would you like to play against an AI player? Type 'yes' or 'no'.").lower()
+if vs_AI == "yes":
+    ai_player = True
+    ai_letter = input("Please choose a letter for the AI. ('X' or 'O')").upper()
+    while ai_letter not in valid_letters: # If they were BSing the input...
+        ai_letter = input("Enter X or O buddy. 😐").upper()
+    if ai_letter == 'O':
+        human_letter = 'X'
+    else:
+        human_letter = 'O'
+else:
+    ai_player = False
+    ai_letter = None
+    human_letter = None
 
 start_game = None
 while True:
@@ -72,18 +108,29 @@ positions = ["top-left", "top-center",
                  "bottom-right"]
 
 while start_game:
-    letter = letter_checker()
-    where_to = input("Where would you like to place your letter?\n").lower()
+    current_letter = letter_checker()
 
-    # Make sure where_to is a valid position
-    if where_to in positions:
-        add_letter(where_to, letter)
+    if ai_player and current_letter == ai_letter: # If the current letter according to the turns
+        # is the Ai's letter, the AI should move
+        ai_move()
         turns += 1
         print_board()
         print(f"Turn count: {turns}")
     else:
-        print("Invalid input. Check to ensure that position is a valid one.")
-        continue
+        where_to = input("Where would you like to place your letter?\n").lower()
+
+        # Make sure where_to is a valid position
+        if where_to in positions:
+            can_add = add_letter(where_to, current_letter)
+            if can_add:
+                turns += 1
+                print_board()
+                print(f"Turn count: {turns}")
+            else:
+                continue
+        else:
+            print("Invalid input. Check to ensure that position is a valid one.")
+            continue
 
     # Check for a winner
 
@@ -98,9 +145,9 @@ while start_game:
         (board[0], board[4], board[8]),
         (board[2], board[4], board[6]),
     ]
-    winner = win_draw_lose(letter, turns, winning_rows)
+    winner = win_draw_lose(current_letter, turns, winning_rows)
     if winner:
-        print(f"The winner is {letter}!")
+        print(f"The winner is {current_letter}!")
         break
     elif winner is None:
         print("It was a draw!")
